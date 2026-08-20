@@ -10,3 +10,14 @@ media/
 .venv/
 env/
 venv/
+
+# Local database backups
+*.sql
+*.backup
+
+# Django logs
+logs/
+*.log
+
+# VS Code
+.vscode/

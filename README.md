@@ -111,7 +111,7 @@
 
 ### **Step 1: Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/AI_STUDY_HUB.git
+git clone https://github.com/yoursAsmaa/ai_study_hub.git
 cd AI_STUDY_HUB
 ```
 
@@ -364,7 +364,7 @@ AI_STUDY_HUB/
 │   ├── models.py        # ChatMessage, CoachingSession
 │   ├── views.py         # AI chat, recommendations
 │   ├── services/
-│   │   └── ai_service.py  # OpenAI integration
+│   │   └── ai_service.py  # Gemini integration
 │   └── urls.py
 │
 ├── config/              # Project configuration
