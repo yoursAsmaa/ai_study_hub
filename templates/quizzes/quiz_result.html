@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Results: {{ quiz.title }} - AI Study Hub{% endblock %}
+{% block page_title %}Quiz Results{% endblock %}
+
+{% block content %}
+<div style="max-width: 750px; margin: 1rem auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Stats Cards Summary -->
+    <div class="card" style="padding: 2.25rem; text-align: center; background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%); border: 1px solid var(--accent-light);">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">{{ quiz.title }}</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 1.5rem;">Performance Summary</span>
+
+        <!-- Circular Score Indicator / Text -->
+        <div style="margin: 0.5rem auto 1.5rem;">
+            <div style="font-size: 3.5rem; font-weight: 800; color: var(--accent-primary); line-height: 1;">
+                {{ quiz.score|stringformat:".1f" }}%
+            </div>
+            <div style="font-size: 1rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                Score: <strong>{{ quiz.correct_answers }} / {{ quiz.total_questions }}</strong>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; max-width: 480px; margin: 0 auto; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <div>
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Items</span>
+                <p style="font-size: 1.1rem; font-weight: 700; margin-top: 0.2rem;">{{ quiz.total_questions }}</p>
+            </div>
+            <div>
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; color: var(--accent-success);">Correct</span>
+                <p style="font-size: 1.1rem; font-weight: 700; color: var(--accent-success); margin-top: 0.2rem;">{{ quiz.correct_answers }}</p>
+            </div>
+            <div>
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; color: var(--accent-danger);">Incorrect</span>
+                <p style="font-size: 1.1rem; font-weight: 700; color: var(--accent-danger); margin-top: 0.2rem;">{{ incorrect_answers }}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap:wrap; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <a href="{% url 'quizzes:quiz_take' quiz.id %}" class="btn btn-primary">🔄 Retake Quiz</a>
+            <a href="{% url 'quizzes:quiz_detail' quiz.id %}" class="btn btn-outline">← Back to Details</a>
+            {% if quiz.completed %}
+            <a href="{% url 'quizzes:quiz_result_pdf' quiz.id %}"
+               class="btn btn-outline btn-sm"
+               style="display:flex;align-items:center;gap:.4rem;"
+               title="Download results as PDF">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export PDF
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Question-by-Question Review -->
+    <div>
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">Question-by-Question Review</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            {% for q in questions %}
+            <div class="card" style="padding: 1.5rem; border-left: 5px solid {% if q.is_correct %}var(--accent-success){% else %}var(--accent-danger){% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">QUESTION {{ forloop.counter }}</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; {% if q.is_correct %}color: var(--accent-success);{% else %}color: var(--accent-danger);{% endif %}">
+                        {% if q.is_correct %}✓ Correct{% else %}✗ Incorrect{% endif %}
+                    </span>
+                </div>
+
+                <p style="font-size: 1.02rem; font-weight: 600; line-height: 1.5; color: var(--text-primary); margin-bottom: 1rem;">
+                    {{ q.question_text }}
+                </p>
+
+                <!-- Options Review -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                    {% for option in q.options %}
+                    <div style="padding: 0.5rem 0.75rem; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;
+                        {% if option == q.correct_answer %}
+                            background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent-success); color: var(--accent-success); font-weight: 600;
+                        {% elif option == q.user_answer and not q.is_correct %}
+                            background: rgba(239, 68, 68, 0.1); border: 1px solid var(--accent-danger); color: var(--accent-danger);
+                        {% else %}
+                            background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-secondary);
+                        {% endif %}">
+                        <span>{{ option }}</span>
+                        {% if option == q.correct_answer %}
+                            <span style="font-size: 0.8rem; font-weight: 700;">Correct Answer</span>
+                        {% elif option == q.user_answer %}
+                            <span style="font-size: 0.8rem; font-weight: 700;">Your Choice</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if q.explanation %}
+                <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color);">
+                    <strong style="color: var(--accent-primary); display: block; margin-bottom: 0.2rem;">Explanation:</strong>
+                    <span style="color: var(--text-secondary); line-height: 1.5;">{{ q.explanation }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

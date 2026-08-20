@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — AI Study Hub{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════
+     ROW 1 — Task metric cards
+════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.25rem;margin-bottom:1.5rem;">
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">TOTAL TASKS</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-primary);margin-top:.2rem;">{{ total_tasks }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(79,70,229,.12);color:var(--accent-primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📋</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">COMPLETED</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-success);margin-top:.2rem;">{{ completed_tasks }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(16,185,129,.12);color:var(--accent-success);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">✓</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">PENDING</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-warning);margin-top:.2rem;">{{ pending_tasks }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(245,158,11,.12);color:var(--accent-warning);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">⏳</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">OVERDUE</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-danger);margin-top:.2rem;">{{ overdue_tasks }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(239,68,68,.12);color:var(--accent-danger);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">⚠️</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ROW 2 — Quiz & study metric cards
+════════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.25rem;margin-bottom:1.5rem;">
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">TOTAL QUIZZES</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-primary);margin-top:.2rem;">{{ total_quizzes }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(79,70,229,.12);color:var(--accent-primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🧩</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">AVG / BEST SCORE</div>
+      <div style="font-size:1.5rem;font-weight:700;color:var(--accent-success);margin-top:.2rem;">{{ average_quiz_score }}% / {{ best_quiz_score }}%</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(16,185,129,.12);color:var(--accent-success);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📊</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">STUDY SESSIONS</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-warning);margin-top:.2rem;">{{ total_study_sessions }}</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(245,158,11,.12);color:var(--accent-warning);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">⏱️</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:.85rem;color:var(--text-secondary);font-weight:600;">STUDY TIME</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--accent-primary);margin-top:.2rem;">{{ total_study_time }} min</div>
+    </div>
+    <div style="width:44px;height:44px;background:rgba(79,70,229,.12);color:var(--accent-primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">⚡</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN GRID — chart + tasks | AI widget + activity
+════════════════════════════════════════════════ -->
+<div class="dash-main-grid">
+
+  <!-- Left column -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- Task completion chart -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="font-size:1.1rem;font-weight:700;">Task Completion Overview</h3>
+        <span style="font-size:.85rem;background:var(--accent-light);color:var(--accent-primary);padding:.2rem .6rem;border-radius:12px;font-weight:600;">
+          {{ completion_rate }}% Completion Rate
+        </span>
+      </div>
+      {% if total_tasks > 0 %}
+      <div style="max-height:260px;display:flex;justify-content:center;align-items:center;padding:.5rem 0;">
+        <canvas id="taskDistributionChart" style="max-height:240px;"></canvas>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+        <p style="font-size:.9rem;">No task data yet. Create your first task to see completion analytics!</p>
+        <a href="{% url 'planner:task_create' %}" class="btn btn-primary" style="margin-top:.75rem;padding:.4rem .8rem;font-size:.85rem;">+ Create Task</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Upcoming deadlines -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid var(--border-color);padding-bottom:.5rem;">
+        <h3 style="font-size:1.1rem;font-weight:700;">Upcoming Deadlines</h3>
+        <a href="{% url 'planner:task_list' %}" style="font-size:.85rem;color:var(--accent-primary);font-weight:600;text-decoration:none;">View All →</a>
+      </div>
+
+      {% if upcoming_tasks %}
+        <div style="display:flex;flex-direction:column;gap:.75rem;">
+          {% for task in upcoming_tasks %}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem;background:var(--bg-primary);border-radius:var(--radius-md);border-left:4px solid {% if task.is_overdue %}var(--accent-danger){% elif task.is_due_today %}var(--accent-warning){% else %}var(--accent-primary){% endif %};">
+            <div>
+              <div style="font-weight:600;font-size:.95rem;">
+                <a href="{% url 'planner:task_detail' task.id %}" style="color:var(--text-primary);text-decoration:none;">{{ task.title }}</a>
+              </div>
+              <div style="font-size:.8rem;color:var(--text-muted);">{{ task.category.name|default:"General" }}</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:.75rem;font-weight:600;padding:.2rem .5rem;border-radius:4px;{% if task.priority == 'HIGH' %}background:rgba(239,68,68,.15);color:var(--accent-danger);{% elif task.priority == 'MEDIUM' %}background:rgba(245,158,11,.15);color:var(--accent-warning);{% else %}background:rgba(16,185,129,.15);color:var(--accent-success);{% endif %}">
+                {{ task.get_priority_display }}
+              </span>
+              <div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem;">
+                {% if task.due_date %}Due: {{ task.due_date|date:"M d, H:i" }}{% else %}No Due Date{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:2rem 1rem;color:var(--text-muted);">
+          <p>No upcoming deadlines.</p>
+          <a href="{% url 'planner:task_create' %}" class="btn btn-primary" style="margin-top:.75rem;padding:.4rem .8rem;font-size:.85rem;">+ Create Task</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /left column -->
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+    <!-- ══ AI STUDY COACH WIDGET ════════════════════════════════════════ -->
+    <div class="card ai-dash-widget">
+      <!-- Widget header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <div class="ai-dash-badge">⚡</div>
+          <div>
+            <div style="font-weight:700;font-size:.97rem;color:var(--accent-primary);">AI Study Coach</div>
+            <div style="font-size:.73rem;color:var(--text-muted);">Personalised recommendations</div>
+          </div>
+        </div>
+        <a href="{% url 'ai_assistant:index' %}" style="font-size:.78rem;color:var(--accent-primary);font-weight:600;text-decoration:none;white-space:nowrap;">
+          Open Coach →
+        </a>
+      </div>
+
+      <!-- Static tip shown immediately (no API call needed) -->
+      <div id="aiStaticTip" style="font-size:.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:.85rem;">
+        {{ static_ai_tip|safe }}
+      </div>
+
+      <!-- Live AI recommendation area -->
+      <div id="aiLiveRec" style="display:none;">
+        <div style="height:1px;background:var(--border-color);margin-bottom:.85rem;"></div>
+        <div id="aiLiveContent" style="font-size:.85rem;line-height:1.65;color:var(--text-secondary);"></div>
+      </div>
+
+      <!-- Loading state -->
+      <div id="aiLoadingState" style="display:none;font-size:.83rem;color:var(--text-muted);font-style:italic;">
+        ⚡ AI is building your recommendation…
+      </div>
+
+      <!-- Error state -->
+      <div id="aiErrorState" style="display:none;font-size:.83rem;color:var(--accent-danger);"></div>
+
+      <!-- Get recommendation button -->
+      <button id="aiGetRecBtn" class="btn btn-primary"
+              style="width:100%;margin-top:.75rem;font-size:.85rem;padding:.5rem;">
+        🎯 Get AI Recommendation
+      </button>
+    </div>
+    <!-- /AI widget -->
+
+    <!-- Recent Activity -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;border-bottom:1px solid var(--border-color);padding-bottom:.5rem;">
+        Recent Activity
+      </h3>
+      {% if recent_activities %}
+        <div style="display:flex;flex-direction:column;gap:.75rem;">
+          {% for act in recent_activities %}
+          <div style="border-left:2px solid var(--accent-primary);padding-left:.6rem;">
+            <span style="font-size:.85rem;font-weight:600;color:var(--text-primary);">{{ act.description }}</span>
+            <div style="font-size:.75rem;color:var(--text-muted);">{{ act.created_at|timesince }} ago</div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;">
+          No recent activity yet.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Notes & Resources quick counts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:var(--accent-primary);">{{ total_notes }}</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-top:.2rem;">Notes</div>
+        <a href="{% url 'notes:note_list' %}" style="font-size:.78rem;color:var(--accent-primary);text-decoration:none;">View →</a>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:var(--accent-primary);">{{ total_resources }}</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-top:.2rem;">Resources</div>
+        <a href="{% url 'resources:resource_list' %}" style="font-size:.78rem;color:var(--accent-primary);text-decoration:none;">View →</a>
+      </div>
+    </div>
+
+  </div><!-- /right column -->
+</div><!-- /dash-main-grid -->
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+.dash-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+}
+@media (max-width: 900px) {
+  .dash-main-grid { grid-template-columns: 1fr; }
+}
+.ai-dash-widget {
+  background: linear-gradient(135deg,rgba(79,70,229,.07),rgba(6,182,212,.07));
+  border-color: rgba(79,70,229,.2);
+}
+.ai-dash-badge {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent-primary), #06b6d4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+/* Recommendation items inside the widget */
+.ai-dash-rec-item {
+  display: flex; gap: .6rem; align-items: flex-start;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.ai-dash-rec-item:last-of-type { border-bottom: none; }
+.ai-dash-rec-num {
+  width: 20px; height: 20px;
+  background: var(--accent-primary); color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+}
+.ai-dash-tip {
+  margin-top: .65rem;
+  padding: .5rem .75rem;
+  background: rgba(79,70,229,.08);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: .82rem; color: var(--text-secondary);
+}
+</style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ═══════════════════════════════════════════════════════
+   Dashboard — Task chart + AI recommendation widget
+═══════════════════════════════════════════════════════ */
+
+/* ── Task doughnut chart ─────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const ctx = document.getElementById('taskDistributionChart');
+  if (ctx) {
+    // Get current theme for chart colors
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#d1d5db' : '#0f172a';
+    
+    const chartData = [{{ completed_tasks }}, {{ pending_tasks }}, {{ overdue_tasks }}];
+    const hasData = chartData.some(val => val > 0);
+    
+    if (hasData) {
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Pending', 'Overdue'],
+          datasets: [{
+            data: chartData,
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 0,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: textColor,
+                padding: 12,
+                font: { size: 13 },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          },
+        },
+      });
+    }
+  }
+});
+
+/* ── AI Recommendation widget ───────────────────────── */
+const CSRF         = '{{ csrf_token }}';
+const getRecBtn    = document.getElementById('aiGetRecBtn');
+const liveRec      = document.getElementById('aiLiveRec');
+const liveContent  = document.getElementById('aiLiveContent');
+const loadingState = document.getElementById('aiLoadingState');
+const errorState   = document.getElementById('aiErrorState');
+const staticTip    = document.getElementById('aiStaticTip');
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderRecommendations(data) {
+  const recs = data.recommendations || [];
+  const tip  = data.overall_tip || '';
+  let html   = '';
+
+  if (recs.length) {
+    recs.forEach((r, i) => {
+      html += `
+        <div class="ai-dash-rec-item">
+          <div class="ai-dash-rec-num">${i + 1}</div>
+          <div>
+            <div style="font-weight:700;font-size:.85rem;">${escHtml(r.subject)}</div>
+            <div style="font-size:.8rem;color:var(--text-secondary);margin-top:.1rem;">${escHtml(r.activity)}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);margin-top:.15rem;">
+              ⏱ ${r.duration_minutes} min · <em>${escHtml(r.reason)}</em>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  if (tip) {
+    html += `<div class="ai-dash-tip">💬 ${escHtml(tip)}</div>`;
+  }
+
+  if (!html) {
+    html = '<p style="font-size:.83rem;color:var(--text-muted);">Add tasks, quizzes, and study sessions to unlock personalised recommendations!</p>';
+  }
+
+  return html;
+}
+
+if (getRecBtn) {
+  getRecBtn.addEventListener('click', async () => {
+    getRecBtn.disabled = true;
+    getRecBtn.textContent = 'AI is thinking…';
+    loadingState.style.display = 'block';
+    errorState.style.display   = 'none';
+    liveRec.style.display      = 'none';
+    staticTip.style.display    = 'none';
+
+    try {
+      const fd = new FormData();
+      const resp = await fetch("{% url 'ai_assistant:recommend' %}", {
+        method:  'POST',
+        headers: { 'X-CSRFToken': CSRF },
+        body:    fd,
+      });
+
+      const data = await resp.json();
+      loadingState.style.display = 'none';
+
+      if (data.status === 'ok') {
+        liveContent.innerHTML  = renderRecommendations(data);
+        liveRec.style.display  = 'block';
+        getRecBtn.textContent  = '🔄 Refresh Recommendation';
+        getRecBtn.disabled     = false;
+      } else {
+        errorState.textContent = data.message || 'Could not load recommendations.';
+        errorState.style.display = 'block';
+        staticTip.style.display  = 'block';
+        getRecBtn.textContent    = '🎯 Try Again';
+        getRecBtn.disabled       = false;
+      }
+    } catch {
+      loadingState.style.display = 'none';
+      errorState.textContent     = 'Network error. Please check your connection.';
+      errorState.style.display   = 'block';
+      staticTip.style.display    = 'block';
+      getRecBtn.textContent      = '🎯 Try Again';
+      getRecBtn.disabled         = false;
+    }
+  });
+}
+</script>
+{% endblock %}

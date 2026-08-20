@@ -1,0 +1,22 @@
+# ── Core Framework ────────────────────────────────────────────────────────────
+Django>=5.1,<6.0
+
+# ── Database ──────────────────────────────────────────────────────────────────
+psycopg2-binary>=2.9.9
+
+# ── Environment Variables ─────────────────────────────────────────────────────
+python-dotenv>=1.0.1
+
+# ── Image Handling (profile pictures) ────────────────────────────────────────
+Pillow>=10.2.0
+
+# ── PDF Export ────────────────────────────────────────────────────────────────
+reportlab>=4.1.0
+
+# ── HTTP Requests (utility) ───────────────────────────────────────────────────
+requests>=2.31.0
+
+# ── AI Provider — Google Gemini Python SDK ──────────────────────────────────
+# Used exclusively server-side. The API key is NEVER exposed to the browser.
+# Free tier available at: https://ai.google.dev/
+google-genai>=0.1.0

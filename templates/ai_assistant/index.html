@@ -1,0 +1,822 @@
+{% extends 'base.html' %}
+{% block title %}AI Study Coach — AI Study Hub{% endblock %}
+{% block page_title %}AI Study Coach{% endblock %}
+
+{% block content %}
+<div class="ai-coach-layout">
+
+  <!-- ═══════════════════════════════════════════════════
+       LEFT PANEL — Chat Interface
+  ════════════════════════════════════════════════════ -->
+  <section class="ai-chat-panel card">
+
+    <!-- Chat header -->
+    <div class="ai-chat-header">
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <div class="ai-avatar-badge">⚡</div>
+        <div>
+          <div style="font-weight:700;font-size:1rem;">AI Study Coach</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Ask anything study-related</div>
+        </div>
+      </div>
+      <form method="post" action="{% url 'ai_assistant:clear_chat' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline"
+                style="padding:0.3rem 0.7rem;font-size:0.78rem;"
+                onclick="return confirm('Clear all chat history?')">
+          🗑 Clear
+        </button>
+      </form>
+    </div>
+
+    <!-- Message area -->
+    <div class="ai-messages-area" id="chatMessages">
+      {% if not chat_history %}
+      <div class="ai-empty-chat">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;">💬</div>
+        <p>Start a conversation! Ask me anything about your studies.</p>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">
+          e.g. "Explain Django MVT", "What are SQL joins?", "How do I study effectively?"
+        </p>
+      </div>
+      {% else %}
+        {% for msg in chat_history %}
+          {% if msg.role == 'user' %}
+          <div class="chat-bubble chat-bubble-user">
+            <div class="bubble-content">{{ msg.content }}</div>
+            <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+          </div>
+          {% else %}
+          <div class="chat-bubble chat-bubble-ai">
+            <div class="bubble-avatar">⚡</div>
+            <div style="flex:1;min-width:0;">
+              <div class="bubble-content ai-text">{{ msg.content|linebreaksbr }}</div>
+              <div class="bubble-time">{{ msg.created_at|date:"H:i" }}</div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <!-- Typing indicator (hidden by default) -->
+      <div class="chat-bubble chat-bubble-ai" id="typingIndicator" style="display:none;">
+        <div class="bubble-avatar">⚡</div>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="ai-input-area">
+      <div id="chatError" class="ai-inline-error" style="display:none;"></div>
+      <div style="display:flex;gap:0.5rem;align-items:flex-end;">
+        <textarea id="chatInput"
+                  class="ai-textarea"
+                  placeholder="Ask your AI Study Coach…  (Shift+Enter for new line)"
+                  rows="2"
+                  maxlength="{{ max_chat_chars }}"
+                  aria-label="Chat message"></textarea>
+        <button id="chatSendBtn" class="btn btn-primary ai-send-btn" aria-label="Send">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.3rem;">
+        <span style="font-size:0.72rem;color:var(--text-muted);">Press Enter to send · Shift+Enter for new line</span>
+        <span id="charCount" style="font-size:0.72rem;color:var(--text-muted);">0 / {{ max_chat_chars }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════
+       RIGHT PANEL — Quick Actions
+  ════════════════════════════════════════════════════ -->
+  <aside class="ai-actions-panel">
+
+    <!-- ── Summarize ─────────────────────────────── -->
+    <div class="card ai-action-card" id="summarizeCard">
+      <div class="ai-action-header">
+        <span class="ai-action-icon">📝</span>
+        <div>
+          <div class="ai-action-title">Summarize Note</div>
+          <div class="ai-action-desc">Get a concise summary, key points, and important terms</div>
+        </div>
+      </div>
+      {% if user_notes %}
+      <div class="ai-action-form">
+        <select id="summarizeNoteSelect" class="form-control" aria-label="Select note to summarize">
+          <option value="">— Select a note —</option>
+          {% for n in user_notes %}
+          <option value="{{ n.pk }}">{{ n.title|truncatechars:55 }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-primary ai-action-btn" id="summarizeBtn">
+          Summarize with AI
+        </button>
+      </div>
+      <div id="summarizeResult" class="ai-result-box" style="display:none;"></div>
+      {% else %}
+      <p class="ai-no-data">No notes yet. <a href="{% url 'notes:note_create' %}">Create your first note →</a></p>
+      {% endif %}
+    </div>
+
+    <!-- ── Explain ────────────────────────────────── -->
+    <div class="card ai-action-card" id="explainCard">
+      <div class="ai-action-header">
+        <span class="ai-action-icon">💡</span>
+        <div>
+          <div class="ai-action-title">Explain Note</div>
+          <div class="ai-action-desc">Get a plain-language explanation in your chosen style</div>
+        </div>
+      </div>
+      {% if user_notes %}
+      <div class="ai-action-form">
+        <select id="explainNoteSelect" class="form-control" aria-label="Select note to explain">
+          <option value="">— Select a note —</option>
+          {% for n in user_notes %}
+          <option value="{{ n.pk }}">{{ n.title|truncatechars:55 }}</option>
+          {% endfor %}
+        </select>
+        <select id="explainStyleSelect" class="form-control" aria-label="Explanation style">
+          <option value="beginner">Beginner-friendly</option>
+          <option value="detailed">Detailed</option>
+          <option value="example-based">Example-based</option>
+        </select>
+        <button class="btn btn-primary ai-action-btn" id="explainBtn">
+          Explain with AI
+        </button>
+      </div>
+      <div id="explainResult" class="ai-result-box" style="display:none;"></div>
+      {% else %}
+      <p class="ai-no-data">No notes yet. <a href="{% url 'notes:note_create' %}">Create your first note →</a></p>
+      {% endif %}
+    </div>
+
+    <!-- ── Generate Quiz ──────────────────────────── -->
+    <div class="card ai-action-card" id="quizCard">
+      <div class="ai-action-header">
+        <span class="ai-action-icon">🧩</span>
+        <div>
+          <div class="ai-action-title">Generate Quiz</div>
+          <div class="ai-action-desc">Create multiple-choice questions from a note</div>
+        </div>
+      </div>
+      {% if user_notes %}
+      <form method="post" action="{% url 'ai_assistant:generate_quiz' %}" id="quizGenForm">
+        {% csrf_token %}
+        <div class="ai-action-form">
+          <select name="note_id" class="form-control" required aria-label="Select note for quiz">
+            <option value="">— Select a note —</option>
+            {% for n in user_notes %}
+            <option value="{{ n.pk }}">{{ n.title|truncatechars:55 }}</option>
+            {% endfor %}
+          </select>
+          <select name="count" class="form-control" aria-label="Number of questions">
+            <option value="5">5 questions</option>
+            <option value="10">10 questions</option>
+            <option value="15">15 questions</option>
+          </select>
+          <button type="submit" class="btn btn-primary ai-action-btn" id="quizGenBtn">
+            Generate Quiz
+          </button>
+        </div>
+      </form>
+      <div id="quizGenStatus" class="ai-result-box" style="display:none;"></div>
+      {% else %}
+      <p class="ai-no-data">No notes yet. <a href="{% url 'notes:note_create' %}">Create your first note →</a></p>
+      {% endif %}
+    </div>
+
+    <!-- ── Generate Flashcards ────────────────────── -->
+    <div class="card ai-action-card" id="flashcardCard">
+      <div class="ai-action-header">
+        <span class="ai-action-icon">🎴</span>
+        <div>
+          <div class="ai-action-title">Generate Flashcards</div>
+          <div class="ai-action-desc">Create study flashcards from note content</div>
+        </div>
+      </div>
+      {% if user_notes %}
+      <form method="post" action="{% url 'ai_assistant:generate_flashcards' %}" id="flashcardGenForm">
+        {% csrf_token %}
+        <div class="ai-action-form">
+          <select name="note_id" class="form-control" required aria-label="Select note for flashcards">
+            <option value="">— Select a note —</option>
+            {% for n in user_notes %}
+            <option value="{{ n.pk }}">{{ n.title|truncatechars:55 }}</option>
+            {% endfor %}
+          </select>
+          <select name="count" class="form-control" aria-label="Number of flashcards">
+            <option value="5">5 flashcards</option>
+            <option value="10">10 flashcards</option>
+            <option value="15">15 flashcards</option>
+          </select>
+          <button type="submit" class="btn btn-primary ai-action-btn" id="flashcardGenBtn">
+            Generate Flashcards
+          </button>
+        </div>
+      </form>
+      {% else %}
+      <p class="ai-no-data">No notes yet. <a href="{% url 'notes:note_create' %}">Create your first note →</a></p>
+      {% endif %}
+    </div>
+
+    <!-- ── Study Recommendation ───────────────────── -->
+    <div class="card ai-action-card" id="recommendCard">
+      <div class="ai-action-header">
+        <span class="ai-action-icon">🎯</span>
+        <div>
+          <div class="ai-action-title">Study Recommendation</div>
+          <div class="ai-action-desc">Get personalised suggestions based on your activity</div>
+        </div>
+      </div>
+      <div class="ai-action-form">
+        <button class="btn btn-primary ai-action-btn" id="recommendBtn">
+          Get Recommendations
+        </button>
+      </div>
+      <div id="recommendResult" class="ai-result-box" style="display:none;"></div>
+    </div>
+
+  </aside><!-- /ai-actions-panel -->
+</div><!-- /ai-coach-layout -->
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI Study Coach — Vanilla JavaScript
+   All AI calls go to Django views via fetch().
+   The API key is NEVER present in this file.
+═══════════════════════════════════════════════════════════════════════════ */
+
+const CSRF = '{{ csrf_token }}';
+
+/* ── Utility helpers ────────────────────────────────────────────────────── */
+
+function setLoading(btn, isLoading, originalText) {
+  btn.disabled = isLoading;
+  btn.textContent = isLoading ? 'AI is thinking…' : originalText;
+}
+
+function showResultBox(boxId, html) {
+  const box = document.getElementById(boxId);
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
+function hideResultBox(boxId) {
+  const box = document.getElementById(boxId);
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function errorBox(msg) {
+  return `<div class="ai-result-error">⚠ ${escapeHtml(msg)}</div>`;
+}
+
+async function postForm(url, formData) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+    body: formData,
+  });
+  return resp.json();
+}
+
+/* ── Chat ───────────────────────────────────────────────────────────────── */
+
+const chatInput   = document.getElementById('chatInput');
+const chatSendBtn = document.getElementById('chatSendBtn');
+const chatMessages = document.getElementById('chatMessages');
+const typingIndicator = document.getElementById('typingIndicator');
+const chatError   = document.getElementById('chatError');
+const charCount   = document.getElementById('charCount');
+const MAX_CHAT    = {{ max_chat_chars }};
+
+chatInput.addEventListener('input', () => {
+  const len = chatInput.value.length;
+  charCount.textContent = `${len} / ${MAX_CHAT}`;
+  charCount.style.color = len > MAX_CHAT * 0.9 ? 'var(--accent-danger)' : 'var(--text-muted)';
+});
+
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+});
+chatSendBtn.addEventListener('click', sendChat);
+
+function appendBubble(role, text, time) {
+  // Remove empty-chat placeholder if present
+  const empty = chatMessages.querySelector('.ai-empty-chat');
+  if (empty) empty.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = `chat-bubble chat-bubble-${role}`;
+
+  if (role === 'user') {
+    wrap.innerHTML = `
+      <div class="bubble-content">${escapeHtml(text)}</div>
+      <div class="bubble-time">${time}</div>`;
+  } else {
+    // AI: allow basic line breaks but still escape
+    const safeText = escapeHtml(text).replace(/\n/g, '<br>');
+    wrap.innerHTML = `
+      <div class="bubble-avatar">⚡</div>
+      <div style="flex:1;min-width:0;">
+        <div class="bubble-content ai-text">${safeText}</div>
+        <div class="bubble-time">${time}</div>
+      </div>`;
+  }
+
+  // Insert before typing indicator
+  chatMessages.insertBefore(wrap, typingIndicator);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function sendChat() {
+  const question = chatInput.value.trim();
+  if (!question) return;
+  if (question.length > MAX_CHAT) {
+    chatError.textContent = `Message too long (max ${MAX_CHAT} chars).`;
+    chatError.style.display = 'block';
+    return;
+  }
+
+  chatError.style.display = 'none';
+  chatInput.value = '';
+  charCount.textContent = `0 / ${MAX_CHAT}`;
+  setLoading(chatSendBtn, true, '');
+
+  appendBubble('user', question, nowTime());
+  typingIndicator.style.display = 'flex';
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  try {
+    const resp = await fetch("{% url 'ai_assistant:chat' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF,
+      },
+      body: JSON.stringify({ message: question }),
+    });
+
+    const data = await resp.json();
+    typingIndicator.style.display = 'none';
+
+    if (data.status === 'ok') {
+      appendBubble('ai', data.answer, nowTime());
+    } else {
+      chatError.textContent = data.message || 'AI service error. Please try again.';
+      chatError.style.display = 'block';
+    }
+  } catch (err) {
+    typingIndicator.style.display = 'none';
+    chatError.textContent = 'Network error. Please check your connection.';
+    chatError.style.display = 'block';
+  } finally {
+    setLoading(chatSendBtn, false, '');
+    chatInput.focus();
+  }
+}
+
+// Scroll to bottom on load
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
+/* ── Summarize ──────────────────────────────────────────────────────────── */
+
+const summarizeBtn = document.getElementById('summarizeBtn');
+if (summarizeBtn) {
+  const origText = summarizeBtn.textContent;
+  summarizeBtn.addEventListener('click', async () => {
+    const noteId = document.getElementById('summarizeNoteSelect').value;
+    if (!noteId) { showResultBox('summarizeResult', errorBox('Please select a note.')); return; }
+
+    setLoading(summarizeBtn, true, origText);
+    hideResultBox('summarizeResult');
+
+    const fd = new FormData();
+    fd.append('note_id', noteId);
+
+    try {
+      const data = await postForm("{% url 'ai_assistant:summarize' %}", fd);
+      if (data.status === 'ok') {
+        let html = `<h4 class="ai-result-title">📝 Summary — ${escapeHtml(data.note_title)}</h4>`;
+        html += `<p class="ai-result-text">${escapeHtml(data.summary)}</p>`;
+
+        if (data.key_points && data.key_points.length) {
+          html += `<h5 class="ai-result-subtitle">Key Points</h5><ul class="ai-result-list">`;
+          data.key_points.forEach(p => { html += `<li>${escapeHtml(p)}</li>`; });
+          html += `</ul>`;
+        }
+        if (data.important_terms && data.important_terms.length) {
+          html += `<h5 class="ai-result-subtitle">Important Terms</h5><ul class="ai-result-list">`;
+          data.important_terms.forEach(t => { html += `<li>${escapeHtml(t)}</li>`; });
+          html += `</ul>`;
+        }
+        showResultBox('summarizeResult', html);
+      } else {
+        showResultBox('summarizeResult', errorBox(data.message));
+      }
+    } catch {
+      showResultBox('summarizeResult', errorBox('Network error. Please try again.'));
+    } finally {
+      setLoading(summarizeBtn, false, origText);
+    }
+  });
+}
+
+/* ── Explain ────────────────────────────────────────────────────────────── */
+
+const explainBtn = document.getElementById('explainBtn');
+if (explainBtn) {
+  const origText = explainBtn.textContent;
+  explainBtn.addEventListener('click', async () => {
+    const noteId = document.getElementById('explainNoteSelect').value;
+    const style  = document.getElementById('explainStyleSelect').value;
+    if (!noteId) { showResultBox('explainResult', errorBox('Please select a note.')); return; }
+
+    setLoading(explainBtn, true, origText);
+    hideResultBox('explainResult');
+
+    const fd = new FormData();
+    fd.append('note_id', noteId);
+    fd.append('style', style);
+
+    try {
+      const data = await postForm("{% url 'ai_assistant:explain' %}", fd);
+      if (data.status === 'ok') {
+        const safeText = escapeHtml(data.explanation).replace(/\n/g, '<br>');
+        const html = `
+          <h4 class="ai-result-title">💡 Explanation — ${escapeHtml(data.note_title)}</h4>
+          <p class="ai-result-text">${safeText}</p>`;
+        showResultBox('explainResult', html);
+      } else {
+        showResultBox('explainResult', errorBox(data.message));
+      }
+    } catch {
+      showResultBox('explainResult', errorBox('Network error. Please try again.'));
+    } finally {
+      setLoading(explainBtn, false, origText);
+    }
+  });
+}
+
+/* ── Generate Quiz (form submit with loading state) ─────────────────────── */
+
+const quizGenForm = document.getElementById('quizGenForm');
+if (quizGenForm) {
+  const quizBtn = document.getElementById('quizGenBtn');
+  const origText = quizBtn.textContent;
+
+  quizGenForm.addEventListener('submit', (e) => {
+    const noteId = quizGenForm.querySelector('[name="note_id"]').value;
+    if (!noteId) {
+      e.preventDefault();
+      showResultBox('quizGenStatus', errorBox('Please select a note.'));
+      return;
+    }
+    // Show loading — the page will redirect on success
+    setLoading(quizBtn, true, origText);
+    showResultBox('quizGenStatus',
+      '<div class="ai-thinking">⚡ AI is generating your quiz… please wait.</div>');
+  });
+}
+
+/* ── Generate Flashcards (form submit with loading state) ────────────────── */
+
+const flashcardGenForm = document.getElementById('flashcardGenForm');
+if (flashcardGenForm) {
+  const fcBtn = document.getElementById('flashcardGenBtn');
+  const origText = fcBtn.textContent;
+
+  flashcardGenForm.addEventListener('submit', (e) => {
+    const noteId = flashcardGenForm.querySelector('[name="note_id"]').value;
+    if (!noteId) {
+      e.preventDefault();
+      return;
+    }
+    setLoading(fcBtn, true, origText);
+  });
+}
+
+/* ── Study Recommendation ───────────────────────────────────────────────── */
+
+const recommendBtn = document.getElementById('recommendBtn');
+if (recommendBtn) {
+  const origText = recommendBtn.textContent;
+  recommendBtn.addEventListener('click', async () => {
+    setLoading(recommendBtn, true, origText);
+    hideResultBox('recommendResult');
+
+    const fd = new FormData();
+
+    try {
+      const data = await postForm("{% url 'ai_assistant:recommend' %}", fd);
+      if (data.status === 'ok') {
+        let html = '';
+
+        if (data.recommendations && data.recommendations.length) {
+          html += `<h4 class="ai-result-title">🎯 Your Study Plan</h4>`;
+          data.recommendations.forEach((r, i) => {
+            html += `
+              <div class="ai-rec-item">
+                <div class="ai-rec-number">${i + 1}</div>
+                <div>
+                  <div class="ai-rec-subject">${escapeHtml(r.subject)}</div>
+                  <div class="ai-rec-activity">${escapeHtml(r.activity)}</div>
+                  <div class="ai-rec-meta">
+                    ⏱ ${r.duration_minutes} min &nbsp;·&nbsp;
+                    <em>${escapeHtml(r.reason)}</em>
+                  </div>
+                </div>
+              </div>`;
+          });
+        }
+
+        if (data.overall_tip) {
+          html += `<div class="ai-rec-tip">💬 ${escapeHtml(data.overall_tip)}</div>`;
+        }
+
+        if (!html) {
+          html = `<p class="ai-result-text">Add more tasks, notes, and quizzes to unlock personalised recommendations!</p>`;
+        }
+
+        showResultBox('recommendResult', html);
+      } else {
+        showResultBox('recommendResult', errorBox(data.message || 'Could not load recommendations.'));
+      }
+    } catch {
+      showResultBox('recommendResult', errorBox('Network error. Please try again.'));
+    } finally {
+      setLoading(recommendBtn, false, origText);
+    }
+  });
+}
+</script>
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   AI Study Coach — Page-specific styles
+   Uses only existing CSS variables from main.css
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Layout ───────────────────────────────────────────────── */
+.ai-coach-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ai-coach-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Chat panel ───────────────────────────────────────────── */
+.ai-chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 78vh;
+  min-height: 500px;
+  padding: 0;
+  overflow: hidden;
+}
+.ai-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.ai-avatar-badge {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent-primary), #06b6d4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+.ai-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  scroll-behavior: smooth;
+}
+.ai-empty-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+/* ── Chat bubbles ─────────────────────────────────────────── */
+.chat-bubble { display: flex; max-width: 85%; gap: 0.5rem; }
+.chat-bubble-user {
+  align-self: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.chat-bubble-ai { align-self: flex-start; align-items: flex-start; }
+
+.bubble-content {
+  padding: 0.65rem 0.9rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.chat-bubble-user .bubble-content {
+  background: var(--accent-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.chat-bubble-ai .bubble-content {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 4px;
+}
+.bubble-avatar {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent-primary), #06b6d4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; flex-shrink: 0; margin-top: 2px;
+}
+.bubble-time {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  padding: 0 0.2rem;
+}
+
+/* ── Typing dots ──────────────────────────────────────────── */
+.typing-dots {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0.65rem 0.9rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px; border-bottom-left-radius: 4px;
+}
+.typing-dots span {
+  width: 7px; height: 7px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  animation: typingBounce 1.2s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Input area ───────────────────────────────────────────── */
+.ai-input-area {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.ai-textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.9rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.ai-textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.ai-send-btn {
+  height: 42px; width: 42px;
+  padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ai-inline-error {
+  font-size: 0.82rem;
+  color: var(--accent-danger);
+  margin-bottom: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Right panel — action cards ───────────────────────────── */
+.ai-actions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 78vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.ai-action-card { padding: 1.1rem 1.25rem; }
+.ai-action-header {
+  display: flex; align-items: flex-start;
+  gap: 0.65rem; margin-bottom: 0.9rem;
+}
+.ai-action-icon {
+  font-size: 1.35rem; flex-shrink: 0; margin-top: 1px;
+}
+.ai-action-title { font-weight: 700; font-size: 0.95rem; }
+.ai-action-desc  { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+.ai-action-form  { display: flex; flex-direction: column; gap: 0.5rem; }
+.ai-action-btn   { width: 100%; padding: 0.5rem; font-size: 0.87rem; }
+
+/* ── Result boxes ─────────────────────────────────────────── */
+.ai-result-box {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.87rem;
+  line-height: 1.6;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.ai-result-title    { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--accent-primary); }
+.ai-result-subtitle { font-weight: 600; font-size: 0.83rem; margin: 0.6rem 0 0.3rem; color: var(--text-secondary); }
+.ai-result-text     { margin: 0; color: var(--text-primary); }
+.ai-result-list     { margin: 0; padding-left: 1.2rem; }
+.ai-result-list li  { margin-bottom: 0.3rem; }
+.ai-result-error    { color: var(--accent-danger); }
+.ai-thinking        { color: var(--accent-primary); font-style: italic; }
+
+/* ── Recommendation items ─────────────────────────────────── */
+.ai-rec-item {
+  display: flex; gap: 0.75rem; align-items: flex-start;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.ai-rec-item:last-of-type { border-bottom: none; }
+.ai-rec-number {
+  width: 24px; height: 24px;
+  background: var(--accent-primary); color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+}
+.ai-rec-subject  { font-weight: 700; font-size: 0.88rem; }
+.ai-rec-activity { font-size: 0.83rem; color: var(--text-secondary); margin-top: 0.1rem; }
+.ai-rec-meta     { font-size: 0.77rem; color: var(--text-muted); margin-top: 0.2rem; }
+.ai-rec-tip {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(79, 70, 229, 0.07);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.83rem; color: var(--text-secondary);
+}
+.ai-no-data { font-size: 0.83rem; color: var(--text-muted); }
+.ai-no-data a { color: var(--accent-primary); }
+
+/* ── Scrollbar thin ───────────────────────────────────────── */
+.ai-messages-area::-webkit-scrollbar,
+.ai-actions-panel::-webkit-scrollbar,
+.ai-result-box::-webkit-scrollbar { width: 5px; }
+.ai-messages-area::-webkit-scrollbar-thumb,
+.ai-actions-panel::-webkit-scrollbar-thumb,
+.ai-result-box::-webkit-scrollbar-thumb {
+  background: var(--border-color); border-radius: 3px;
+}
+</style>
+{% endblock %}

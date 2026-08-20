@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AI Study Hub{% endblock %}
+{% block page_title %}Resource Bookmark Form{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 1rem auto;">
+    <div class="card" style="padding: 2rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            {{ title }}
+        </h2>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.title.id_for_label }}">Resource Title *</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div style="color: var(--accent-danger); font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.title.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.link.id_for_label }}">URL / Address Link *</label>
+                {{ form.link }}
+                {% if form.link.errors %}
+                <div style="color: var(--accent-danger); font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.link.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.resource_type.id_for_label }}">Resource Type *</label>
+                    {{ form.resource_type }}
+                    {% if form.resource_type.errors %}
+                    <div style="color: var(--accent-danger); font-size: 0.85rem;">{{ form.resource_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                    <div style="color: var(--accent-danger); font-size: 0.85rem;">{{ form.category.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.description.id_for_label }}">Short Description / Notes</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div style="color: var(--accent-danger); font-size: 0.85rem; margin-top: 0.25rem;">
+                    {{ form.description.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Resource</button>
+                <a href="{% url 'resources:resource_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

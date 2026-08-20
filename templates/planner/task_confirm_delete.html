@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Delete Task - AI Study Hub{% endblock %}
+{% block page_title %}Delete Task Confirmation{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 3rem auto; text-align: center;">
+    <div class="card" style="padding: 2.5rem 2rem;">
+        <div style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 1rem;">
+            ⚠️
+        </div>
+
+        <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem;">Delete Task?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
+            Are you sure you want to permanently delete <strong>"{{ task.title }}"</strong>? This action cannot be undone.
+        </p>
+
+        <form method="post" action="{% url 'planner:task_delete' task.id %}" style="display: flex; gap: 1rem; justify-content: center;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" style="flex: 1;">Yes, Delete Task</button>
+            <a href="{% url 'planner:task_list' %}" class="btn btn-outline" style="flex: 1;">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

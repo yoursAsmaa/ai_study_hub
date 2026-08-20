@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Flashcard Review - AI Study Hub{% endblock %}
+{% block page_title %}Flashcards Review Mode{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 3D Flashcard Flip Styling */
+.flip-card-container {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 480px;
+    height: 280px;
+    margin: 2rem auto;
+    cursor: pointer;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.flip-card-container.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.flip-card-front {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.flip-card-back {
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(79, 70, 229, 0.05) 100%);
+    color: var(--text-primary);
+    transform: rotateY(180deg);
+    border-color: var(--accent-primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 1rem auto; text-align: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Deck Review Mode</h2>
+        <a href="{% url 'quizzes:flashcard_list' %}" class="btn btn-outline">Close Review</a>
+    </div>
+
+    {% if deck %}
+    <!-- Card Progress -->
+    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;" id="progress-indicator">
+        Card <strong id="current-card-num">1</strong> of <strong>{{ deck|length }}</strong>
+    </p>
+
+    <!-- Flip Card Widget -->
+    <div class="flip-card-container" id="flashcard-container" onclick="this.classList.toggle('flipped')">
+        <div class="flip-card-inner">
+            <!-- Front -->
+            <div class="flip-card-front">
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Front (Question/Term)</span>
+                <p style="font-size: 1.25rem; font-weight: 600; line-height: 1.5;" id="front-text">Question front text</p>
+                <span style="font-size: 0.75rem; color: var(--accent-primary); margin-top: auto; font-weight: 600;">⚡ Click card to flip</span>
+            </div>
+            <!-- Back -->
+            <div class="flip-card-back">
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 1rem; letter-spacing: 0.05em;">Back (Answer/Definition)</span>
+                <p style="font-size: 1.25rem; font-weight: 600; line-height: 1.5;" id="back-text">Answer back text</p>
+                <span style="font-size: 0.75rem; color: var(--accent-primary); margin-top: auto; font-weight: 600;">⚡ Click card to flip back</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Button Controls -->
+    <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+        <button class="btn btn-outline" id="prev-btn" onclick="prevCard()">← Prev Card</button>
+
+        <form method="post" id="toggle-known-form" action="" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary" style="background-color: var(--accent-success); border-color: var(--accent-success);">
+                ✓ Mark Mastered (Known)
+            </button>
+        </form>
+
+        <button class="btn btn-outline" id="next-btn" onclick="nextCard()">Next Card →</button>
+    </div>
+
+    {% else %}
+    <div class="card" style="padding: 3rem 1.5rem; margin-top: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">All caught up!</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            You have no flashcards in your "Needs Review" list. Go add some cards or mark existing ones to review.
+        </p>
+        <a href="{% url 'quizzes:flashcard_list' %}" class="btn btn-primary">Back to Flashcards</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if deck %}
+<script>
+    // Load flashcard deck database locally in javascript
+    const deck = [
+        {% for card in deck %}
+        {
+            id: {{ card.id }},
+            front: "{{ card.front|escapejs }}",
+            back: "{{ card.back|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let currentIndex = 0;
+    const totalCards = deck.length;
+
+    const flashcardContainer = document.getElementById('flashcard-container');
+    const frontText = document.getElementById('front-text');
+    const backText = document.getElementById('back-text');
+    const currentCardNum = document.getElementById('current-card-num');
+    const toggleKnownForm = document.getElementById('toggle-known-form');
+
+    function updateCardView() {
+        // Reset card state (unflipped)
+        flashcardContainer.classList.remove('flipped');
+        
+        // Wait for flip back transition (0.3s) before replacing text
+        setTimeout(() => {
+            const card = deck[currentIndex];
+            frontText.innerText = card.front;
+            backText.innerText = card.back;
+            currentCardNum.innerText = currentIndex + 1;
+            
+            // Update toggle known form action URL dynamically
+            toggleKnownForm.action = `/quizzes/flashcards/${card.id}/toggle/`;
+        }, 150);
+    }
+
+    function nextCard() {
+        if (currentIndex < totalCards - 1) {
+            currentIndex++;
+            updateCardView();
+        } else {
+            alert("You have reached the end of the review deck!");
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCardView();
+        }
+    }
+
+    // Initialize first card
+    document.addEventListener('DOMContentLoaded', () => {
+        updateCardView();
+    });
+</script>
+{% endif %}
+{% endblock %}

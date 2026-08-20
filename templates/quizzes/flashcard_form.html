@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AI Study Hub{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 550px; margin: 2rem auto;">
+    <div class="card" style="padding: 2rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            {{ title }}
+        </h2>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.front.id_for_label }}">Front Card Text *</label>
+                {{ form.front }}
+                {% if form.front.errors %}<div style="color:var(--accent-danger);font-size:0.85rem;margin-top:0.25rem;">{{ form.front.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.back.id_for_label }}">Back Card Text *</label>
+                {{ form.back }}
+                {% if form.back.errors %}<div style="color:var(--accent-danger);font-size:0.85rem;margin-top:0.25rem;">{{ form.back.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.source_note.id_for_label }}">Source Material Note</label>
+                {{ form.source_note }}
+                {% if form.source_note.errors %}<div style="color:var(--accent-danger);font-size:0.85rem;margin-top:0.25rem;">{{ form.source_note.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">Save Flashcard</button>
+                <a href="{% url 'quizzes:flashcard_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,158 @@
+// AI Study Hub - Entity Relationship Diagram
+// Generated for Graduation Project
+
+Table User {
+  id integer [primary key]
+  username varchar [unique]
+  email varchar [unique]
+  password varchar
+  first_name varchar
+  last_name varchar
+  is_active boolean
+  date_joined datetime
+}
+
+Table Profile {
+  id integer [primary key]
+  user_id integer [ref: - User.id, unique]
+  profile_image varchar
+  bio text
+  university varchar
+  major varchar
+  phone varchar
+  is_email_verified boolean
+  created_at datetime
+  updated_at datetime
+}
+
+Table Category {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  name varchar
+  color varchar
+  created_at datetime
+  
+  indexes {
+    (user_id, name) [unique]
+  }
+}
+
+Table Tag {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  name varchar
+  
+  indexes {
+    (user_id, name) [unique]
+  }
+}
+
+Table Note {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  category_id integer [ref: > Category.id, null]
+  title varchar
+  content text
+  summary text
+  created_at datetime
+  updated_at datetime
+}
+
+Table Note_Tags {
+  note_id integer [ref: > Note.id]
+  tag_id integer [ref: > Tag.id]
+  
+  indexes {
+    (note_id, tag_id) [pk]
+  }
+}
+
+Table Task {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  category_id integer [ref: > Category.id, null]
+  title varchar
+  description text
+  due_date datetime
+  priority varchar
+  status varchar
+  is_completed boolean
+  created_at datetime
+  updated_at datetime
+}
+
+Table Resource {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  category_id integer [ref: > Category.id, null]
+  title varchar
+  description text
+  link varchar
+  resource_type varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table Quiz {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  source_note_id integer [ref: > Note.id, null]
+  title varchar
+  score float
+  total_questions integer
+  correct_answers integer
+  completed boolean
+  created_at datetime
+  updated_at datetime
+}
+
+Table Question {
+  id integer [primary key]
+  quiz_id integer [ref: > Quiz.id]
+  question_text text
+  options json
+  correct_answer varchar
+  user_answer varchar
+  explanation text
+  is_correct boolean
+  created_at datetime
+}
+
+Table Flashcard {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  quiz_id integer [ref: > Quiz.id, null]
+  source_note_id integer [ref: > Note.id, null]
+  front text
+  back text
+  known boolean
+  created_at datetime
+}
+
+Table StudySession {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  category_id integer [ref: > Category.id, null]
+  subject varchar
+  start_time datetime
+  end_time datetime
+  duration_minutes integer
+  notes text
+  created_at datetime
+}
+
+Table ChatMessage {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  role varchar
+  content text
+  created_at datetime
+}
+
+Table Activity {
+  id integer [primary key]
+  user_id integer [ref: > User.id]
+  action_type varchar
+  description varchar
+  created_at datetime
+}

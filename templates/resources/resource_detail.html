@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ resource.title }} - Resource Details{% endblock %}
+{% block page_title %}Resource Details{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 1rem auto;">
+    <div class="card" style="padding: 2.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+            <span style="font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; background: rgba(79, 70, 229, 0.1); color: var(--accent-primary); text-transform: uppercase;">
+                {{ resource.get_resource_type_display }}
+            </span>
+            <span style="font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 4px; background: var(--bg-primary); color: var(--text-secondary);">
+                Category: {{ resource.category.name|default:"General" }}
+            </span>
+        </div>
+
+        <h1 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">
+            {{ resource.title }}
+        </h1>
+
+        <div style="background-color: var(--bg-primary); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; white-space: pre-line; line-height: 1.6; color: var(--text-secondary);">
+            {{ resource.description|default:"No description provided." }}
+        </div>
+
+        <!-- Resource Link Field -->
+        <div class="card" style="padding: 1rem; margin-bottom: 1.5rem; background: var(--bg-primary); border-color: var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div style="overflow-x: auto; flex: 1;">
+                <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 0.2rem;">Bookmark Link</span>
+                <code style="font-size: 0.9rem; color: var(--accent-primary); word-break: break-all;">{{ resource.link }}</code>
+            </div>
+            <a href="{{ resource.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                🔗 Open Resource Link
+            </a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.88rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Bookmarked At</span>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ resource.created_at|date:"M d, Y H:i" }}</p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Last Updated</span>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ resource.updated_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; flex-wrap: wrap;">
+            <a href="{% url 'resources:resource_edit' resource.id %}" class="btn btn-outline" style="flex: 1;">Edit Details</a>
+            <a href="{% url 'resources:resource_delete' resource.id %}" class="btn btn-danger" style="flex: 1;">Delete Bookmark</a>
+            <a href="{% url 'resources:resource_list' %}" class="btn btn-outline" style="margin-left: auto;">Back to Library</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

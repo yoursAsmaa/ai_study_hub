@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ note.title }} — Study Note{% endblock %}
+{% block page_title %}Note Detail{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;">
+
+  <!-- ── Note Card ────────────────────────────────────────────────────── -->
+  <div class="card" style="padding:2.25rem;margin-bottom:1.5rem;">
+
+    <!-- Header row -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        {% if note.category %}
+        <span style="font-size:0.8rem;font-weight:700;padding:0.2rem 0.65rem;border-radius:4px;background:rgba(79,70,229,.1);color:var(--accent-primary);">
+          {{ note.category.name }}
+        </span>
+        {% endif %}
+        <span style="font-size:0.8rem;color:var(--text-muted);">
+          Updated {{ note.updated_at|date:"M d, Y H:i" }}
+        </span>
+        <span style="font-size:0.8rem;color:var(--text-muted);">
+          Created {{ note.created_at|date:"M d, Y" }}
+        </span>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <a href="{% url 'notes:note_edit' note.id %}" class="btn btn-outline" style="padding:.4rem .8rem;font-size:.85rem;">Edit</a>
+        <a href="{% url 'notes:note_delete' note.id %}" class="btn btn-danger"  style="padding:.4rem .8rem;font-size:.85rem;">Delete</a>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 style="font-size:1.75rem;font-weight:700;margin-bottom:1.25rem;color:var(--text-primary);border-bottom:1px solid var(--border-color);padding-bottom:.75rem;">
+      {{ note.title }}
+    </h1>
+
+    <!-- Tags -->
+    {% if note.tags.all %}
+    <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.5rem;">
+      {% for tag in note.tags.all %}
+      <span style="font-size:.75rem;background:var(--bg-primary);padding:.2rem .6rem;border-radius:12px;border:1px solid var(--border-color);color:var(--text-secondary);">
+        #{{ tag.name }}
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Content -->
+    <div style="background:var(--bg-primary);padding:1.5rem;border-radius:var(--radius-md);font-size:.97rem;line-height:1.75;color:var(--text-primary);white-space:pre-line;margin-bottom:2rem;">
+      {{ note.content }}
+    </div>
+
+    <!-- Existing AI Summary (if already generated) -->
+    {% if note.summary %}
+    <div style="background:rgba(79,70,229,.05);border:1px solid rgba(79,70,229,.2);border-radius:var(--radius-md);padding:1rem 1.25rem;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">
+        <span>📝</span>
+        <span style="font-weight:700;font-size:.88rem;color:var(--accent-primary);">AI Summary (saved)</span>
+      </div>
+      <p style="font-size:.88rem;color:var(--text-secondary);margin:0;line-height:1.6;">{{ note.summary }}</p>
+    </div>
+    {% endif %}
+
+    <!-- ── AI STUDY COACH ACTIONS ──────────────────────────────────────── -->
+    <div style="background:linear-gradient(135deg,rgba(79,70,229,.06),rgba(6,182,212,.06));border:1px solid rgba(79,70,229,.25);border-radius:var(--radius-lg);padding:1.35rem;margin-bottom:1.5rem;">
+
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.2rem;">⚡</span>
+        <h3 style="font-size:1rem;font-weight:700;color:var(--accent-primary);margin:0;">AI Study Coach</h3>
+      </div>
+
+      <!-- Quick-action buttons -->
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;">
+        <button class="btn btn-outline ai-note-btn" id="btn-summarize"
+                style="font-size:.85rem;" data-action="summarize">
+          📝 Summarize
+        </button>
+        <button class="btn btn-outline ai-note-btn" id="btn-explain"
+                style="font-size:.85rem;" data-action="explain">
+          💡 Explain
+        </button>
+        <button class="btn btn-outline ai-note-btn" id="btn-quiz"
+                style="font-size:.85rem;" data-action="quiz">
+          🧩 Generate Quiz
+        </button>
+        <button class="btn btn-outline ai-note-btn" id="btn-flashcards"
+                style="font-size:.85rem;" data-action="flashcards">
+          🎴 Flashcards
+        </button>
+      </div>
+
+      <!-- ── Summarize sub-panel ─────────────────────────── -->
+      <div id="panel-summarize" class="ai-sub-panel" style="display:none;">
+        <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:.75rem;">
+          Generate a concise summary with key points and important terms.
+        </p>
+        <button class="btn btn-primary" id="doSummarize" style="font-size:.85rem;padding:.45rem 1rem;">
+          Summarize with AI
+        </button>
+      </div>
+
+      <!-- ── Explain sub-panel ───────────────────────────── -->
+      <div id="panel-explain" class="ai-sub-panel" style="display:none;">
+        <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:.75rem;">
+          Choose an explanation style:
+        </p>
+        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+          <select id="explainStyle" class="form-control" style="width:auto;font-size:.85rem;" aria-label="Explanation style">
+            <option value="beginner">Beginner-friendly</option>
+            <option value="detailed">Detailed</option>
+            <option value="example-based">Example-based</option>
+          </select>
+          <button class="btn btn-primary" id="doExplain" style="font-size:.85rem;padding:.45rem 1rem;">
+            Explain with AI
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Quiz sub-panel ──────────────────────────────── -->
+      <div id="panel-quiz" class="ai-sub-panel" style="display:none;">
+        <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:.75rem;">
+          Generate multiple-choice questions from this note and save them as a quiz you can take immediately.
+        </p>
+        <form method="post" action="{% url 'ai_assistant:generate_quiz' %}" id="quizForm">
+          {% csrf_token %}
+          <input type="hidden" name="note_id" value="{{ note.pk }}">
+          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+            <select name="count" class="form-control" style="width:auto;font-size:.85rem;" aria-label="Number of questions">
+              <option value="5">5 questions</option>
+              <option value="10">10 questions</option>
+              <option value="15">15 questions</option>
+            </select>
+            <button type="submit" class="btn btn-primary" id="doQuiz" style="font-size:.85rem;padding:.45rem 1rem;">
+              Generate Quiz
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Flashcards sub-panel ────────────────────────── -->
+      <div id="panel-flashcards" class="ai-sub-panel" style="display:none;">
+        <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:.75rem;">
+          Generate study flashcards from this note — saved directly to your Flashcard deck.
+        </p>
+        <form method="post" action="{% url 'ai_assistant:generate_flashcards' %}" id="flashForm">
+          {% csrf_token %}
+          <input type="hidden" name="note_id" value="{{ note.pk }}">
+          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+            <select name="count" class="form-control" style="width:auto;font-size:.85rem;" aria-label="Number of flashcards">
+              <option value="5">5 flashcards</option>
+              <option value="10">10 flashcards</option>
+              <option value="15">15 flashcards</option>
+            </select>
+            <button type="submit" class="btn btn-primary" id="doFlashcards" style="font-size:.85rem;padding:.45rem 1rem;">
+              Generate Flashcards
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Shared result / error output -->
+      <div id="aiNoteResult" style="display:none;margin-top:1rem;"></div>
+
+    </div><!-- /AI block -->
+
+    <!-- Back link -->
+    <div style="border-top:1px solid var(--border-color);padding-top:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
+      <a href="{% url 'notes:note_list' %}" class="btn btn-outline">← Back to Notes</a>
+      <a href="{% url 'notes:note_pdf' note.pk %}"
+         class="btn btn-outline btn-sm"
+         title="Download this note as PDF"
+         style="display:flex;align-items:center;gap:.4rem;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Export PDF
+      </a>
+    </div>
+  </div><!-- /card -->
+
+</div><!-- /max-width wrapper -->
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ═══════════════════════════════════════════════════════
+   Note Detail — AI Actions
+   All AI calls go to Django views; API key never here.
+═══════════════════════════════════════════════════════ */
+const CSRF    = '{{ csrf_token }}';
+const NOTE_ID = '{{ note.pk }}';
+
+/* ── Toggle sub-panels ──────────────────────────────── */
+const panels  = ['summarize','explain','quiz','flashcards'];
+const btnIds  = ['btn-summarize','btn-explain','btn-quiz','btn-flashcards'];
+
+btnIds.forEach(id => {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    panels.forEach(p => {
+      const el = document.getElementById('panel-' + p);
+      if (el) el.style.display = (p === action && el.style.display === 'none') ? 'block' : 'none';
+    });
+    // Clear previous results when toggling
+    hideResult();
+    // Highlight active button
+    btnIds.forEach(b => document.getElementById(b)?.classList.remove('btn-active-ai'));
+    btn.classList.add('btn-active-ai');
+  });
+});
+
+/* ── Helpers ─────────────────────────────────────────── */
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showResult(html) {
+  const box = document.getElementById('aiNoteResult');
+  box.innerHTML = html;
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideResult() {
+  const box = document.getElementById('aiNoteResult');
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+function errorHtml(msg) {
+  return `<div class="ai-nd-error">⚠ ${escapeHtml(msg)}</div>`;
+}
+function setBtn(id, loading, orig) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.disabled = loading;
+  b.textContent = loading ? 'AI is thinking…' : orig;
+}
+async function postAI(url, fd) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF },
+    body: fd,
+  });
+  return r.json();
+}
+
+/* ── Summarize ───────────────────────────────────────── */
+document.getElementById('doSummarize')?.addEventListener('click', async () => {
+  const orig = 'Summarize with AI';
+  setBtn('doSummarize', true, orig);
+  hideResult();
+
+  const fd = new FormData();
+  fd.append('note_id', NOTE_ID);
+
+  try {
+    const d = await postAI("{% url 'ai_assistant:summarize' %}", fd);
+    if (d.status === 'ok') {
+      let h = `<div class="ai-nd-result">`;
+      h += `<div class="ai-nd-result-title">📝 Summary</div>`;
+      h += `<p>${escapeHtml(d.summary)}</p>`;
+      if (d.key_points?.length) {
+        h += `<div class="ai-nd-subtitle">Key Points</div><ul>`;
+        d.key_points.forEach(p => { h += `<li>${escapeHtml(p)}</li>`; });
+        h += `</ul>`;
+      }
+      if (d.important_terms?.length) {
+        h += `<div class="ai-nd-subtitle">Important Terms</div><ul>`;
+        d.important_terms.forEach(t => { h += `<li>${escapeHtml(t)}</li>`; });
+        h += `</ul>`;
+      }
+      h += `</div>`;
+      showResult(h);
+    } else {
+      showResult(errorHtml(d.message));
+    }
+  } catch {
+    showResult(errorHtml('Network error — please try again.'));
+  } finally {
+    setBtn('doSummarize', false, orig);
+  }
+});
+
+/* ── Explain ─────────────────────────────────────────── */
+document.getElementById('doExplain')?.addEventListener('click', async () => {
+  const orig  = 'Explain with AI';
+  const style = document.getElementById('explainStyle').value;
+  setBtn('doExplain', true, orig);
+  hideResult();
+
+  const fd = new FormData();
+  fd.append('note_id', NOTE_ID);
+  fd.append('style', style);
+
+  try {
+    const d = await postAI("{% url 'ai_assistant:explain' %}", fd);
+    if (d.status === 'ok') {
+      const safe = escapeHtml(d.explanation).replace(/\n/g, '<br>');
+      showResult(`<div class="ai-nd-result">
+        <div class="ai-nd-result-title">💡 Explanation</div>
+        <p>${safe}</p>
+      </div>`);
+    } else {
+      showResult(errorHtml(d.message));
+    }
+  } catch {
+    showResult(errorHtml('Network error — please try again.'));
+  } finally {
+    setBtn('doExplain', false, orig);
+  }
+});
+
+/* ── Quiz form — show loading state, then full-page redirect ── */
+document.getElementById('quizForm')?.addEventListener('submit', () => {
+  setBtn('doQuiz', true, 'Generate Quiz');
+  showResult('<div class="ai-nd-thinking">⚡ Generating quiz… please wait, this may take a moment.</div>');
+});
+
+/* ── Flashcards form — show loading state, then full-page redirect ── */
+document.getElementById('flashForm')?.addEventListener('submit', () => {
+  setBtn('doFlashcards', true, 'Generate Flashcards');
+  showResult('<div class="ai-nd-thinking">⚡ Generating flashcards… please wait.</div>');
+});
+</script>
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+/* Note detail — AI section styles */
+.ai-sub-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: .85rem 1rem;
+  margin-top: .1rem;
+}
+.btn-active-ai {
+  background: rgba(79,70,229,.12) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--accent-primary) !important;
+}
+#aiNoteResult {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  font-size: .88rem;
+  line-height: 1.65;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.ai-nd-result-title {
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-size: .9rem;
+  margin-bottom: .5rem;
+}
+.ai-nd-subtitle {
+  font-weight: 600;
+  font-size: .82rem;
+  color: var(--text-secondary);
+  margin: .55rem 0 .25rem;
+}
+.ai-nd-result ul { padding-left: 1.2rem; margin: 0; }
+.ai-nd-result li { margin-bottom: .25rem; }
+.ai-nd-result p  { margin: 0 0 .5rem; }
+.ai-nd-error   { color: var(--accent-danger); }
+.ai-nd-thinking { color: var(--accent-primary); font-style: italic; }
+</style>
+{% endblock %}

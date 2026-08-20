@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Taking Quiz: {{ quiz.title }} - AI Study Hub{% endblock %}
+{% block page_title %}Taking Quiz{% endblock %}
+
+{% block content %}
+<div style="max-width: 750px; margin: 1rem auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Active Test</span>
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0;">{{ quiz.title }}</h1>
+        </div>
+        <a href="{% url 'quizzes:quiz_detail' quiz.id %}" class="btn btn-outline" onclick="return confirm('Abandon this quiz attempt?')">Exit Quiz</a>
+    </div>
+
+    <form method="post" action="{% url 'quizzes:quiz_submit' quiz.id %}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% csrf_token %}
+
+        {% for q in questions %}
+        <div class="card" style="padding: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary);">QUESTION {{ forloop.counter }} OF {{ quiz.total_questions }}</span>
+            </div>
+
+            <p style="font-size: 1.05rem; font-weight: 600; line-height: 1.5; color: var(--text-primary); margin-bottom: 1.25rem;">
+                {{ q.question_text }}
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for option in q.options %}
+                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); cursor: pointer; transition: all var(--transition-fast);">
+                    <input type="radio" name="question_{{ q.id }}" value="{{ option }}" required style="accent-color: var(--accent-primary);">
+                    <span style="font-size: 0.95rem; color: var(--text-secondary);">{{ option }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="card" style="padding: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">✓ Submit Test Answers</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

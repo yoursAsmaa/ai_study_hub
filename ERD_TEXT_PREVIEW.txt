@@ -1,0 +1,235 @@
+════════════════════════════════════════════════════════════════════════════════
+AI STUDY HUB - ENTITY RELATIONSHIP DIAGRAM (TEXT PREVIEW)
+════════════════════════════════════════════════════════════════════════════════
+
+CORE ENTITY: USER (Django Built-in)
+════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                    USER                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ • id (PK)                                                                   │
+│ • username (unique)                                                         │
+│ • email (unique)                                                            │
+│ • password                                                                  │
+│ • first_name, last_name                                                     │
+│ • is_active, date_joined                                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                ┌─────────────────────┼─────────────────────┐
+                │                     │                     │
+                ▼                     ▼                     ▼
+        ┌───────────┐         ┌───────────┐       ┌────────────┐
+        │  PROFILE  │         │ CATEGORY  │       │    TAG     │
+        │  (1:1)    │         │  (1:N)    │       │   (1:N)    │
+        └───────────┘         └───────────┘       └────────────┘
+                                      │                     │
+                    ┌─────────────────┼──────┐              │
+                    │                 │      │              │
+                    ▼                 ▼      ▼              │
+              ┌──────────┐      ┌──────┐ ┌──────────┐      │
+              │   NOTE   │◄─────┤ TASK │ │ RESOURCE │      │
+              │  (1:N)   │      │(1:N) │ │  (1:N)   │      │
+              └──────────┘      └──────┘ └──────────┘      │
+                    │ ◄──────────────────────────────────M:M
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+      ▼             ▼             ▼
+┌──────────┐  ┌────────────┐  ┌──────────────┐
+│   QUIZ   │  │ FLASHCARD  │  │ STUDYSESSION │
+│  (1:N)   │  │   (1:N)    │  │    (1:N)     │
+└──────────┘  └────────────┘  └──────────────┘
+      │
+      ▼
+┌──────────┐
+│ QUESTION │
+│  (1:N)   │
+└──────────┘
+
+OTHER USER-RELATED ENTITIES:
+      
+      USER
+        │
+   ┌────┼─────┐
+   │    │     │
+   ▼    ▼     ▼
+CHAT  ACTIVITY
+MESSAGE
+
+════════════════════════════════════════════════════════════════════════════════
+DETAILED RELATIONSHIPS
+════════════════════════════════════════════════════════════════════════════════
+
+ONE-TO-ONE (1:1)
+─────────────────────────────────────────────────────────────────────────────
+User ←→ Profile (unique user_id)
+
+ONE-TO-MANY (1:N) - User is the Parent
+─────────────────────────────────────────────────────────────────────────────
+User → Profile          (1 user has 1 profile)
+User → Category         (1 user has many categories)
+User → Tag              (1 user has many tags)
+User → Task             (1 user has many tasks)
+User → Note             (1 user has many notes)
+User → Resource         (1 user has many resources)
+User → Quiz             (1 user has many quizzes)
+User → Flashcard        (1 user has many flashcards)
+User → StudySession     (1 user has many study sessions)
+User → ChatMessage      (1 user has many chat messages)
+User → Activity         (1 user has many activities)
+
+ONE-TO-MANY (1:N) - Category is the Parent
+─────────────────────────────────────────────────────────────────────────────
+Category → Note         (1 category has many notes)
+Category → Task         (1 category has many tasks)
+Category → Resource     (1 category has many resources)
+Category → StudySession (1 category has many study sessions)
+
+ONE-TO-MANY (1:N) - Note is the Parent
+─────────────────────────────────────────────────────────────────────────────
+Note → Quiz             (1 note can generate many quizzes)
+Note → Flashcard        (1 note can generate many flashcards)
+
+ONE-TO-MANY (1:N) - Quiz is the Parent
+─────────────────────────────────────────────────────────────────────────────
+Quiz → Question         (1 quiz has many questions)
+Quiz → Flashcard        (1 quiz can have many flashcards)
+
+MANY-TO-MANY (N:M)
+─────────────────────────────────────────────────────────────────────────────
+Note ↔ Tag              (via Note_Tags junction table)
+                        - 1 note can have many tags
+                        - 1 tag can be on many notes
+
+════════════════════════════════════════════════════════════════════════════════
+TABLE DETAILS
+════════════════════════════════════════════════════════════════════════════════
+
+1. USER (Django Built-in)
+   ├─ PK: id
+   ├─ username, email, password
+   ├─ first_name, last_name
+   └─ is_active, date_joined
+
+2. PROFILE (extends User)
+   ├─ PK: id
+   ├─ FK: user_id → User.id (OneToOne, unique)
+   ├─ profile_image, bio
+   ├─ university, major, phone
+   ├─ is_email_verified
+   └─ created_at, updated_at
+
+3. CATEGORY (organizes content)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ name (unique per user)
+   ├─ color
+   └─ created_at
+
+4. TAG (labels for notes)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ name (unique per user)
+   └─ M2M: ↔ Note
+
+5. NOTE (study notes)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ FK: category_id → Category.id (optional)
+   ├─ M2M: tags ↔ Tag
+   ├─ title, content, summary
+   └─ created_at, updated_at
+
+6. TASK (to-do items)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ FK: category_id → Category.id (optional)
+   ├─ title, description
+   ├─ due_date, priority, status
+   ├─ is_completed
+   └─ created_at, updated_at
+
+7. RESOURCE (learning materials)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ FK: category_id → Category.id (optional)
+   ├─ title, description, link
+   ├─ resource_type
+   └─ created_at, updated_at
+
+8. QUIZ (assessments)
+   ├─ PK: id
+   ├─ FK: user_id → User.id
+   ├─ FK: source_note_id → Note.id (optional)
+   ├─ title, score
+   ├─ total_questions, correct_answers
+   ├─ completed
+   └─ created_at, updated_at
+
+9. QUESTION (quiz questions)
+   ├─ PK: id
+   ├─ FK: quiz_id → Quiz.id
+   ├─ question_text
+   ├─ options (JSON array)
+   ├─ correct_answer, user_answer
+   ├─ explanation, is_correct
+   └─ created_at
+
+10. FLASHCARD (study cards)
+    ├─ PK: id
+    ├─ FK: user_id → User.id
+    ├─ FK: quiz_id → Quiz.id (optional)
+    ├─ FK: source_note_id → Note.id (optional)
+    ├─ front, back
+    ├─ known
+    └─ created_at
+
+11. STUDYSESSION (time tracking)
+    ├─ PK: id
+    ├─ FK: user_id → User.id
+    ├─ FK: category_id → Category.id (optional)
+    ├─ subject
+    ├─ start_time, end_time
+    ├─ duration_minutes, notes
+    └─ created_at
+
+12. CHATMESSAGE (AI interactions)
+    ├─ PK: id
+    ├─ FK: user_id → User.id
+    ├─ role (user/ai)
+    ├─ content
+    └─ created_at
+
+13. ACTIVITY (user actions log)
+    ├─ PK: id
+    ├─ FK: user_id → User.id
+    ├─ action_type, description
+    └─ created_at
+
+════════════════════════════════════════════════════════════════════════════════
+RELATIONSHIP SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+Total Entities:    13 (User + 12 custom models)
+OneToOne:          1  (User ↔ Profile)
+OneToMany:         19 relationships
+ManyToMany:        1  (Note ↔ Tag)
+
+Database:          PostgreSQL
+All migrations:    Applied ✓
+
+════════════════════════════════════════════════════════════════════════════════
+NOTES FOR GRADUATION PROJECT
+════════════════════════════════════════════════════════════════════════════════
+
+✓ Exceeds minimum requirement of 8-10 tables (has 13)
+✓ Has required OneToMany relationships (19 found)
+✓ Has required ManyToMany relationship (Note ↔ Tag)
+✓ All models properly connected through User or shared entities
+✓ No orphaned or disconnected models
+✓ Proper foreign key constraints
+✓ Database indexes defined for performance
+✓ Follows Django best practices
+
+════════════════════════════════════════════════════════════════════════════════

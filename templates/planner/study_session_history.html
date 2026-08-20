@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Session Log - AI Study Hub{% endblock %}
+{% block page_title %}Study Sessions History{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: 2rem; max-width: 800px; margin: 1rem auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0;">Complete Study Log</h2>
+        <a href="{% url 'quizzes:session_list' %}" class="btn btn-outline">Back to Timer Dashboard</a>
+    </div>
+
+    {% if page_obj %}
+        <div style="overflow-x: auto; margin-bottom: 1.5rem;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+                        <th style="padding: 0.75rem 0.5rem;">Subject</th>
+                        <th style="padding: 0.75rem 0.5rem;">Category</th>
+                        <th style="padding: 0.75rem 0.5rem;">Start Date & Time</th>
+                        <th style="padding: 0.75rem 0.5rem;">End Date & Time</th>
+                        <th style="padding: 0.75rem 0.5rem; text-align: right;">Total Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sess in page_obj %}
+                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600; color: var(--text-primary);">{{ sess.subject|default:"General Study" }}</td>
+                        <td style="padding: 0.75rem 0.5rem;">
+                            <span style="font-size: 0.75rem; background: var(--bg-primary); padding: 0.15rem 0.4rem; border-radius: 4px;">
+                                {{ sess.category.name|default:"General" }}
+                            </span>
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem;">{{ sess.start_time|date:"M d, Y H:i:s" }}</td>
+                        <td style="padding: 0.75rem 0.5rem;">{{ sess.end_time|date:"M d, Y H:i:s" }}</td>
+                        <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 700; color: var(--accent-primary);">
+                            {{ sess.duration_minutes }} minutes
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem;">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline">« Previous Page</a>
+            {% endif %}
+
+            <span class="btn btn-outline" style="cursor: default; background: var(--bg-card);">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline">Next Page »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    {% else %}
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 2rem 0;">
+            No study sessions have been logged yet.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

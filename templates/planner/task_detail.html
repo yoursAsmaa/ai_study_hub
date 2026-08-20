@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - Task Detail{% endblock %}
+{% block page_title %}Task Detail{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 1rem auto;">
+    <div class="card" style="padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <span style="font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 12px; {% if task.priority == 'HIGH' %}background: rgba(239, 68, 68, 0.15); color: var(--accent-danger);{% elif task.priority == 'MEDIUM' %}background: rgba(245, 158, 11, 0.15); color: var(--accent-warning);{% else %}background: rgba(16, 185, 129, 0.15); color: var(--accent-success);{% endif %}">
+                {{ task.get_priority_display }} Priority
+            </span>
+
+            <span style="font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px; {% if task.is_completed %}background: rgba(16, 185, 129, 0.15); color: var(--accent-success);{% else %}background: rgba(79, 70, 229, 0.15); color: var(--accent-primary);{% endif %}">
+                {{ task.get_status_display }}
+            </span>
+        </div>
+
+        <h1 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); {% if task.is_completed %}text-decoration: line-through; color: var(--text-muted);{% endif %}">
+            {{ task.title }}
+        </h1>
+
+        {% if task.description %}
+        <div style="background-color: var(--bg-primary); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; white-space: pre-line; line-height: 1.6; color: var(--text-secondary);">
+            {{ task.description }}
+        </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Category</span>
+                <p style="font-weight: 600; margin-top: 0.2rem;">{{ task.category.name|default:"General" }}</p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Due Date</span>
+                <p style="font-weight: 600; margin-top: 0.2rem; {% if task.is_overdue %}color: var(--accent-danger);{% endif %}">
+                    {% if task.due_date %}{{ task.due_date|date:"M d, Y H:i" }}{% else %}No Due Date Set{% endif %}
+                </p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Created</span>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ task.created_at|date:"M d, Y H:i" }}</p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Last Updated</span>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ task.updated_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; flex-wrap: wrap;">
+            <form method="post" action="{% url 'planner:task_toggle_status' task.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn {% if task.is_completed %}btn-outline{% else %}btn-primary{% endif %}">
+                    {% if task.is_completed %}Mark as Pending{% else %}Mark as Completed{% endif %}
+                </button>
+            </form>
+
+            <a href="{% url 'planner:task_edit' task.id %}" class="btn btn-outline">Edit Task</a>
+            <a href="{% url 'planner:task_delete' task.id %}" class="btn btn-danger">Delete Task</a>
+            <a href="{% url 'planner:task_list' %}" class="btn btn-outline" style="margin-left: auto;">Back to Planner</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

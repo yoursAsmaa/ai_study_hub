@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Categories - AI Study Hub{% endblock %}
+{% block page_title %}Categories Management{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 1rem auto;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Categories List -->
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                Your Categories
+            </h3>
+
+            {% if categories %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for cat in categories %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.8rem; background: var(--bg-primary); border-radius: var(--radius-md);">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="width: 14px; height: 14px; border-radius: 50%; background: {{ cat.color }}; display: inline-block;"></span>
+                        <span style="font-weight: 600; font-size: 0.95rem;">{{ cat.name }}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem;">
+                        <a href="{% url 'notes:category_edit' cat.id %}" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Edit</a>
+                        <a href="{% url 'notes:category_delete' cat.id %}" class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Delete</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No categories created yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Add Category Form -->
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                Add New Category
+            </h3>
+
+            <form method="post" action="{% url 'notes:category_list' %}" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label">Category Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div style="color:var(--accent-danger);font-size:0.85rem;">{{ form.name.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Color Code</label>
+                    {{ form.color }}
+                    {% if form.color.errors %}<div style="color:var(--accent-danger);font-size:0.85rem;">{{ form.color.errors.0 }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Add Category</button>
+            </form>
+        </div>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+        <a href="{% url 'notes:note_list' %}" class="btn btn-outline">← Back to Notes</a>
+    </div>
+</div>
+{% endblock %}

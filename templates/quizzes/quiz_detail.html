@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ quiz.title }} - Quiz Detail{% endblock %}
+{% block page_title %}Quiz Details{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 1rem auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Quiz Card Header -->
+    <div class="card" style="padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <div>
+                <span style="font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; {% if quiz.completed %}background: rgba(16, 185, 129, 0.15); color: var(--accent-success);{% else %}background: rgba(245, 158, 11, 0.15); color: var(--accent-warning);{% endif %}">
+                    {% if quiz.completed %}Completed{% else %}Not Taken{% endif %}
+                </span>
+                {% if quiz.completed %}
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.75rem;">
+                    Last Attempt Score: <strong>{{ quiz.score|stringformat:".1f" }}%</strong>
+                </span>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'quizzes:quiz_edit' quiz.id %}" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Edit Title</a>
+                <a href="{% url 'quizzes:quiz_delete' quiz.id %}" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Delete</a>
+            </div>
+        </div>
+
+        <h1 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary);">
+            {{ quiz.title }}
+        </h1>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Total Questions</span>
+                <p style="font-weight: 600; margin-top: 0.2rem;">{{ quiz.total_questions }} Questions</p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Source Material</span>
+                <p style="font-weight: 600; margin-top: 0.2rem;">{{ quiz.source_note.title|default:"Manual Creation" }}</p>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Created At</span>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ quiz.created_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; flex-wrap: wrap;">
+            {% if quiz.questions.exists %}
+                <a href="{% url 'quizzes:quiz_take' quiz.id %}" class="btn btn-primary">✍ Start / Play Quiz</a>
+                {% if quiz.completed %}
+                    <a href="{% url 'quizzes:quiz_result' quiz.id %}" class="btn btn-outline">📊 View Results Review</a>
+                {% endif %}
+            {% else %}
+                <span style="font-size: 0.9rem; color: var(--accent-danger); font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                    ⚠ Quiz requires at least 1 question to start.
+                </span>
+            {% endif %}
+
+            <a href="{% url 'quizzes:question_create' quiz.id %}" class="btn btn-outline" style="margin-left: auto;">+ Add Question Manually</a>
+        </div>
+    </div>
+
+    <!-- Questions Management List -->
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            Question Bank ({{ quiz.total_questions }})
+        </h3>
+
+        {% if questions %}
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                {% for q in questions %}
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-md); border-left: 4px solid var(--accent-primary); display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">QUESTION #{{ forloop.counter }}</span>
+                        <h4 style="font-weight: 700; font-size: 1rem; margin-top: 0.1rem; margin-bottom: 0.5rem; color: var(--text-primary);">{{ q.question_text }}</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            {% for option in q.options %}
+                            <div style="padding: 0.25rem 0.5rem; background: var(--bg-secondary); border-radius: 4px; {% if option == q.correct_answer %}border: 1px solid var(--accent-success); color: var(--accent-success); font-weight: 600;{% endif %}">
+                                {{ option }} {% if option == q.correct_answer %}✓{% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if q.explanation %}
+                        <p style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                            <strong>Explanation:</strong> {{ q.explanation }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" action="{% url 'quizzes:question_delete' quiz.id q.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="return confirm('Remove this question?')">Delete</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 2rem 1rem;">
+                No questions exist in this quiz yet. Add questions manually or wait for AI quiz generation!
+            </p>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 0.5rem;">
+        <a href="{% url 'quizzes:quiz_list' %}" class="btn btn-outline">← Back to Quizzes</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 AI API CONFIGURATION - QUICK FIX GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+"Invalid AI API key. Please check your configuration."
+
+DIAGNOSIS COMPLETE:
+✓ Code is configured correctly
+✓ Provider: OpenAI (gpt-4o-mini)
+✓ Environment variable: AI_API_KEY
+✓ Security: API key is server-side only
+✗ Your .env file needs to be configured with your OpenAI key
+
+═══════════════════════════════════════════════════════════════════════════════
+🔧 HOW TO FIX (3 STEPS)
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: Open Your .env File
+────────────────────────────
+Location: Project root (same folder as manage.py)
+File: .env
+
+STEP 2: Add Your OpenAI API Key
+────────────────────────────────
+Add this line (replace with your actual key):
+
+AI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+IMPORTANT - Common Mistakes:
+✗ AI_API_KEY="sk-proj-xxx"              (NO quotes)
+✗ AI_API_KEY = sk-proj-xxx              (NO spaces around =)
+✗ AI_API_KEY=sk-your-openai-api-key    (NO placeholder)
+✓ AI_API_KEY=sk-proj-xxx                (CORRECT)
+
+Get your key from: https://platform.openai.com/api-keys
+
+STEP 3: Restart Django Server
+──────────────────────────────
+CRITICAL: You MUST restart after changing .env
+
+1. Press Ctrl+C to stop the server
+2. Run: python manage.py runserver
+3. Test the AI chat again
+
+═══════════════════════════════════════════════════════════════════════════════
+🧪 RUN DIAGNOSTIC COMMAND
+═══════════════════════════════════════════════════════════════════════════════
+
+I created a safe diagnostic tool for you:
+
+python manage.py check_ai_config
+
+This command will:
+✓ Check if .env file exists
+✓ Check if AI_API_KEY is loaded
+✓ Report key length (without showing the actual key)
+✓ Detect common issues (whitespace, quotes, placeholder)
+✓ Provide specific fix instructions
+
+SECURITY: Your API key is NEVER printed or exposed.
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 YOUR .env FILE SHOULD LOOK LIKE THIS
+═══════════════════════════════════════════════════════════════════════════════
+
+# Django Core
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+
+# PostgreSQL Database
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=ai_study_hub
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_HOST=127.0.0.1
+DB_PORT=5432
+
+# Email (Gmail SMTP)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your_gmail@gmail.com
+EMAIL_HOST_PASSWORD=your_gmail_app_password
+DEFAULT_FROM_EMAIL=AI Study Hub <your_gmail@gmail.com>
+
+# AI Provider (OpenAI)
+AI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          ↑↑↑ REPLACE THIS WITH YOUR ACTUAL KEY ↑↑↑
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Before testing:
+□ .env file exists in project root
+□ AI_API_KEY line added to .env
+□ Value starts with 'sk-' or 'sk-proj-'
+□ No quotes around the value
+□ No spaces around equals sign
+□ Not using placeholder from .env.example
+□ Django server was RESTARTED
+□ OpenAI key is active and has credits
+
+═══════════════════════════════════════════════════════════════════════════════
+📚 REFERENCE FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+AI_CONFIG_DEBUG.md      - Detailed debugging guide
+AI_CONFIG_SUMMARY.txt   - This quick reference (you are here)
+README.md               - Updated with diagnostic command
+.env.example            - Template for environment variables
+
+New Files Created:
+- ai_assistant/management/commands/check_ai_config.py  - Diagnostic tool
+- ai_assistant/management/__init__.py                  - Package marker
+- ai_assistant/management/commands/__init__.py         - Package marker
+
+═══════════════════════════════════════════════════════════════════════════════
+🔒 SECURITY NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ API key is loaded server-side only
+✓ Never sent to browser
+✓ .env is in .gitignore (won't be committed)
+✓ Diagnostic command never prints the actual key
+✓ All security checks passed in final audit
+
+═══════════════════════════════════════════════════════════════════════════════
+🎯 NEXT STEPS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Get OpenAI API key: https://platform.openai.com/api-keys
+2. Add to .env file: AI_API_KEY=sk-proj-xxx
+3. Restart Django server
+4. Run diagnostic: python manage.py check_ai_config
+5. Test AI chat in browser: http://127.0.0.1:8000/ai/
+
+If still not working after these steps, run the diagnostic command and
+follow the specific instructions it provides.
+
+═══════════════════════════════════════════════════════════════════════════════
+Created: August 15, 2026
+Purpose: Quick fix guide for AI API configuration issue
+═══════════════════════════════════════════════════════════════════════════════

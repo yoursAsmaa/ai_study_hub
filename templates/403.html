@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 — Forbidden</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <script>
+    // Apply saved theme immediately to prevent flash
+    (function(){const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
+    </script>
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-primary);">
+    <div class="auth-wrapper" style="max-width:540px;">
+        <div class="card" style="text-align:center;padding:3rem 2rem;">
+            <div style="font-size:4.5rem;font-weight:900;color:var(--accent-danger);margin-bottom:1rem;">403</div>
+            <h1 style="font-size:1.75rem;font-weight:700;margin-bottom:.75rem;color:var(--text-primary);">Access Forbidden</h1>
+            <p style="color:var(--text-secondary);font-size:1rem;margin-bottom:2rem;line-height:1.6;">
+                You don't have permission to access this resource. This could be because you're not logged in or you don't own this content.
+            </p>
+            <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+                <a href="javascript:history.back()" class="btn btn-outline">← Go Back</a>
+                <a href="/" class="btn btn-primary">🏠 Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

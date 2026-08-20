@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Delete Category - AI Study Hub{% endblock %}
+{% block page_title %}Delete Category Confirmation{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 3rem auto; text-align: center;">
+    <div class="card" style="padding: 2.5rem 2rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">Delete Category?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Are you sure you want to delete category <strong>"{{ category.name }}"</strong>? Notes linked to this category will be unassigned.
+        </p>
+
+        <form method="post" action="{% url 'notes:category_delete' category.id %}" style="display: flex; gap: 1rem; justify-content: center;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" style="flex:1;">Delete</button>
+            <a href="{% url 'notes:category_list' %}" class="btn btn-outline" style="flex:1;">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

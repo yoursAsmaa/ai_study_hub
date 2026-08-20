@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}My Flashcards - AI Study Hub{% endblock %}
+{% block page_title %}Quizzes & Flashcards{% endblock %}
+
+{% block content %}
+<!-- Tab Toggle Header -->
+<div style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+    <a href="{% url 'quizzes:quiz_list' %}" style="font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); text-decoration: none; padding-bottom: 0.5rem;">
+        📝 Quizzes
+    </a>
+    <a href="{% url 'quizzes:flashcard_list' %}" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-primary); text-decoration: none; border-bottom: 3px solid var(--accent-primary); padding-bottom: 0.5rem; margin-bottom: -0.7rem;">
+        🎴 Flashcards
+    </a>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2 style="font-size: 1.3rem; font-weight: 700;">My Study Flashcards</h2>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Memorize terms, equations, and facts using the flip card review tool (Total: {{ total_count }})</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if total_count > 0 %}
+        <a href="{% url 'quizzes:flashcard_review' %}" class="btn btn-primary">⚡ Start Review Deck</a>
+        {% endif %}
+        <a href="{% url 'quizzes:flashcard_create' %}" class="btn btn-primary">+ Create Card</a>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: center;">
+    <span style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 600;">Filter Cards:</span>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="{% url 'quizzes:flashcard_list' %}" class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; {% if not known_filter %}background: var(--accent-primary); color: white; border-color: var(--accent-primary);{% endif %}">All Cards</a>
+        <a href="?known=0" class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; {% if known_filter == '0' %}background: var(--accent-primary); color: white; border-color: var(--accent-primary);{% endif %}">Needs Review</a>
+        <a href="?known=1" class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; {% if known_filter == '1' %}background: var(--accent-primary); color: white; border-color: var(--accent-primary);{% endif %}">Mastered (Known)</a>
+    </div>
+</div>
+
+<!-- Flashcards Cards Grid -->
+{% if page_obj %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+    {% for card in page_obj %}
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; height: 160px; position: relative;">
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; {% if card.known %}background: rgba(16, 185, 129, 0.15); color: var(--accent-success);{% else %}background: rgba(245, 158, 11, 0.15); color: var(--accent-warning);{% endif %}">
+                    {% if card.known %}Mastered{% else %}Needs Review{% endif %}
+                </span>
+                <span style="font-size: 0.72rem; color: var(--text-muted);">
+                    {{ card.created_at|date:"M d, Y" }}
+                </span>
+            </div>
+
+            <!-- Front Text Preview -->
+            <p style="font-size: 0.95rem; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                {{ card.front }}
+            </p>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
+            <!-- Toggle Mastered Form -->
+            <form method="post" action="{% url 'quizzes:flashcard_toggle_known' card.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: {% if card.known %}var(--accent-warning){% else %}var(--accent-success){% endif %};">
+                    {% if card.known %}Unmark Known{% else %}✓ Mark Known{% endif %}
+                </button>
+            </form>
+
+            <div style="display: flex; gap: 0.35rem;">
+                <a href="{% url 'quizzes:flashcard_edit' card.id %}" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Edit</a>
+                <a href="{% url 'quizzes:flashcard_delete' card.id %}" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&known={{ known_filter }}" class="btn btn-outline">« Previous</a>
+    {% endif %}
+
+    <span class="btn btn-outline" style="cursor: default; background: var(--bg-card);">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&known={{ known_filter }}" class="btn btn-outline">Next »</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🎴</div>
+    <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">No flashcards found</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Add terms or questions with answers on the back, then use the Review Mode deck to practice active recall.
+    </p>
+    <a href="{% url 'quizzes:flashcard_create' %}" class="btn btn-primary">+ Create First Card</a>
+</div>
+{% endif %}
+{% endblock %}
